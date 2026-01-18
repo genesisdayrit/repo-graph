@@ -1,10 +1,10 @@
 # Graph Visualization
 
-This document explains how the 3D graph visualization works in Repo Graph.
+This document explains how the graph visualization works in Repo Graph.
 
 ## Overview
 
-Repo Graph renders repository structures as interactive 3D force-directed graphs using **Three.js** and **react-force-graph-3d**. The visualization shows files and directories as nodes connected by edges representing parent-child relationships. A timeline feature lets you watch the repository evolve over time.
+Repo Graph renders repository structures as interactive 2D force-directed graphs using **react-force-graph-2d**. The visualization shows files and directories as nodes connected by edges representing parent-child relationships. A timeline feature lets you watch the repository evolve over time, complete with a "creator node" that fires glowing beams to newly created files and directories.
 
 ## Architecture
 
@@ -12,7 +12,8 @@ Repo Graph renders repository structures as interactive 3D force-directed graphs
 
 ```
 RepoGraph/
-├── RepoGraph3D.jsx      # Main 3D graph renderer
+├── RepoGraph2D.jsx      # Main 2D graph renderer with creator node
+├── RepoGraph3D.jsx      # Alternative 3D renderer (Three.js)
 ├── useGraphData.js      # Transforms events to graph format
 ├── useTimelineAnimation.js  # Timeline playback controls
 ├── GraphControls.jsx    # UI controls for timeline
@@ -74,14 +75,50 @@ Example:
 
 A special root node is created from the repo metadata, serving as the graph's origin point.
 
+### Creator Node
+
+A special "creator" node is added to the graph that visually represents the creation of new files and directories. The creator node:
+
+- Has a pulsing cyan glow effect that animates continuously
+- Is free to move around the graph (participates in force simulation)
+- Has higher repulsion strength to create space around it
+- Fires glowing beams to newly created nodes during timeline playback
+
+The creator node is linked to the root node but the link is not visually rendered - instead, beam animations handle the visual connection.
+
+## Beam Animation
+
+During timeline playback, when new nodes appear in the graph, a glowing beam animation fires from the creator node to each new node:
+
+### How It Works
+
+1. **Node Detection**: The system tracks which nodes are in the graph and detects when new nodes appear
+2. **Queue System**: New nodes are added to a beam queue for sequential processing
+3. **Coordinate Check**: Beams only fire once the target node has been positioned by the force simulation
+4. **Fade Animation**: Each beam fades from full intensity to transparent over ~200ms
+
+### Visual Effect
+
+The beam consists of three layered lines for a glowing effect:
+- **Outer glow**: 10px wide, low opacity cyan
+- **Middle glow**: 5px wide, medium opacity cyan
+- **Core beam**: 2px wide, bright white-cyan
+
+### Timing
+
+- Beams are only fired when the timeline is playing (not during manual scrubbing)
+- One beam animates at a time to prevent visual chaos
+- Beams wait for nodes to have coordinates before firing
+
 ## Visual Representation
 
 ### Node Types and Sizes
 
 | Node Type | Size | Color |
 |-----------|------|-------|
-| Root directory | 8px sphere | Blue (#4a90d9) |
-| Subdirectory | 5px sphere | Green (#7cb342) |
+| Creator node | 12px (pulsing) | Cyan (#64c8ff) with glow |
+| Root directory | 8px circle | Blue (#4a90d9) |
+| Subdirectory | 5px circle | Green (#7cb342) |
 | File | 2px dot | Varies by type |
 
 ### File Type Colors
@@ -200,8 +237,9 @@ For repositories with many files:
 
 | File | Purpose |
 |------|---------|
-| `app/src/components/RepoGraph/RepoGraph3D.jsx` | Main Three.js/react-force-graph-3d renderer |
-| `app/src/components/RepoGraph/useGraphData.js` | Event-to-graph transformation hook |
+| `app/src/components/RepoGraph/RepoGraph2D.jsx` | Main 2D renderer with creator node and beam animation |
+| `app/src/components/RepoGraph/RepoGraph3D.jsx` | Alternative Three.js/react-force-graph-3d renderer |
+| `app/src/components/RepoGraph/useGraphData.js` | Event-to-graph transformation hook (includes creator node) |
 | `app/src/components/RepoGraph/useTimelineAnimation.js` | Timeline playback state management |
 | `app/src/components/RepoGraph/GraphControls.jsx` | Play/pause, speed, slider UI |
 | `app/src/components/RepoGraph/NodeTooltip.jsx` | Hover information display |

@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import RepoGraph2D from "../components/RepoGraph/RepoGraph2D";
 import GraphControls from "../components/RepoGraph/GraphControls";
 import NodeTooltip from "../components/RepoGraph/NodeTooltip";
-import { useGraphData } from "../components/RepoGraph/useGraphData";
+import { useGraphData, CREATOR_NODE_ID } from "../components/RepoGraph/useGraphData";
 import { useTimelineAnimation } from "../components/RepoGraph/useTimelineAnimation";
 
 function RepoPage() {
@@ -19,6 +19,9 @@ function RepoPage() {
   const [viewMode, setViewMode] = useState("table");
   const [hoveredNode, setHoveredNode] = useState(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [newNodeIds, setNewNodeIds] = useState([]);
+  const prevNodeIdsRef = useRef(new Set());
+  const prevPlayingRef = useRef(false);
 
   // Fetch repo data
   useEffect(() => {
@@ -99,6 +102,38 @@ function RepoPage() {
 
   // Transform data to graph format (using event index, not timestamp)
   const graphData = useGraphData(repo, timelineEvents, currentIndex);
+
+  // Track newly appearing nodes for beam animation
+  useEffect(() => {
+    if (!graphData.nodes.length) return;
+
+    // Reset tracking when playback starts (so nodes appear "new" again)
+    if (isPlaying && !prevPlayingRef.current) {
+      prevNodeIdsRef.current = new Set();
+    }
+    prevPlayingRef.current = isPlaying;
+
+    const currentNodeIds = new Set(
+      graphData.nodes
+        .filter((n) => n.id !== CREATOR_NODE_ID)
+        .map((n) => n.id)
+    );
+    const prevNodeIds = prevNodeIdsRef.current;
+
+    // Find nodes that just appeared
+    const newIds = [];
+    currentNodeIds.forEach((id) => {
+      if (!prevNodeIds.has(id)) {
+        newIds.push(id);
+      }
+    });
+
+    if (newIds.length > 0) {
+      setNewNodeIds(newIds);
+    }
+
+    prevNodeIdsRef.current = currentNodeIds;
+  }, [graphData.nodes, isPlaying]);
 
   // Track mouse position for tooltip
   useEffect(() => {
@@ -287,6 +322,8 @@ function RepoPage() {
             <RepoGraph2D
               graphData={graphData}
               onNodeHover={handleNodeHover}
+              newNodeIds={newNodeIds}
+              isPlaying={isPlaying}
             />
           </div>
 

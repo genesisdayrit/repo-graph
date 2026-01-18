@@ -1,5 +1,7 @@
 import { useMemo } from "react";
 
+export const CREATOR_NODE_ID = "__creator__";
+
 /**
  * Transform flat repo_events into graph nodes and links
  * @param cutoffIndex - number of events to include (event-based, not time-based)
@@ -51,6 +53,22 @@ export function useGraphData(repo, events, cutoffIndex) {
     };
     nodes.push(rootNode);
     pathToNode.set(repo.path, rootNode);
+
+    // Add creator node (free-moving, not fixed at center)
+    const creatorNode = {
+      id: CREATOR_NODE_ID,
+      displayName: "Creator",
+      type: "creator",
+      isCreator: true,
+    };
+    nodes.push(creatorNode);
+
+    // Link creator to root
+    links.push({
+      source: CREATOR_NODE_ID,
+      target: repo.id,
+      isCreatorLink: true,
+    });
 
     // Helper to ensure all ancestor directories exist
     const ensureParentExists = (childPath) => {
