@@ -1,6 +1,6 @@
 {
   "scripts": {
     "setup": "cd app && bun install",
-    "run": "cd app && bun run dev"
+    "run": "lsof -ti:3000 | xargs kill -9 2>/dev/null; cd app && bun run dev"
   }
 }
