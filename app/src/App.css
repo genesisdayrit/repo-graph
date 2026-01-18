@@ -115,3 +115,41 @@ tr:hover {
     width: 100%;
   }
 }
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 1rem;
+  color: #646cff;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.repo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.repo-header h1 {
+  margin-bottom: 0;
+  text-align: left;
+}
+
+.repo-path {
+  font-family: monospace;
+  color: #666;
+  margin-bottom: 2rem;
+  word-break: break-all;
+}
+
+.rescan-button {
+  background-color: #4a4a4a;
+}
+
+.rescan-button:hover:not(:disabled) {
+  background-color: #333;
+}

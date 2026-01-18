@@ -5,6 +5,7 @@ import ignore, { Ignore } from "ignore";
 export interface FileEntry {
   path: string;
   createdAt: string;
+  modifiedAt: string;
   type: "file" | "directory";
 }
 
@@ -77,10 +78,18 @@ function formatDate(date: Date): string {
   return date.toISOString();
 }
 
-async function getCreationTime(filePath: string): Promise<Date> {
+interface FileStats {
+  createdAt: Date;
+  modifiedAt: Date;
+}
+
+async function getFileStats(filePath: string): Promise<FileStats> {
   const stats = await stat(filePath);
   // birthtime is creation time on macOS/Windows, falls back to mtime on Linux
-  return stats.birthtime;
+  return {
+    createdAt: stats.birthtime,
+    modifiedAt: stats.mtime,
+  };
 }
 
 export async function listCreationTimes(directory: string): Promise<ListResult> {
@@ -92,10 +101,11 @@ export async function listCreationTimes(directory: string): Promise<ListResult> 
 
   // Add root directory
   try {
-    const rootCreatedAt = await getCreationTime(directory);
+    const rootStats = await getFileStats(directory);
     directories.push({
       path: directory,
-      createdAt: formatDate(rootCreatedAt),
+      createdAt: formatDate(rootStats.createdAt),
+      modifiedAt: formatDate(rootStats.modifiedAt),
       type: "directory",
     });
   } catch (err) {
@@ -120,10 +130,11 @@ export async function listCreationTimes(directory: string): Promise<ListResult> 
       }
 
       try {
-        const createdAt = await getCreationTime(fullPath);
+        const fileStats = await getFileStats(fullPath);
         const fileEntry: FileEntry = {
           path: fullPath,
-          createdAt: formatDate(createdAt),
+          createdAt: formatDate(fileStats.createdAt),
+          modifiedAt: formatDate(fileStats.modifiedAt),
           type: isDir ? "directory" : "file",
         };
 

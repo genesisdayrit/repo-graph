@@ -8,6 +8,20 @@
       "when": 1768761205428,
       "tag": "0000_careful_sally_floyd",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1768764281255,
+      "tag": "0001_past_reaper",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1768764686651,
+      "tag": "0002_first_iron_lad",
+      "breakpoints": true
     }
   ]
 }
