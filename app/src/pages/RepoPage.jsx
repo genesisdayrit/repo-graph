@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import RepoGraph2D from "../components/RepoGraph/RepoGraph2D";
 import GraphControls from "../components/RepoGraph/GraphControls";
 import NodeTooltip from "../components/RepoGraph/NodeTooltip";
@@ -8,12 +8,14 @@ import { useTimelineAnimation } from "../components/RepoGraph/useTimelineAnimati
 
 function RepoPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [repo, setRepo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [events, setEvents] = useState(null);
   const [timelineEvents, setTimelineEvents] = useState([]);
   const [rescanning, setRescanning] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [viewMode, setViewMode] = useState("table");
   const [hoveredNode, setHoveredNode] = useState(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -164,6 +166,31 @@ function RepoPage() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!window.confirm(`Are you sure you want to delete "${repo.name}"?`)) {
+      return;
+    }
+
+    setDeleting(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/repos/${id}`, {
+        method: "DELETE",
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to delete repo");
+      }
+
+      navigate("/");
+    } catch (err) {
+      setError(err.message);
+      setDeleting(false);
+    }
+  };
+
   const formatDate = (isoString) => {
     return new Date(isoString).toLocaleString();
   };
@@ -208,13 +235,22 @@ function RepoPage() {
             Graph
           </button>
         </div>
-        <button
-          onClick={handleRescan}
-          disabled={rescanning}
-          className="rescan-button"
-        >
-          {rescanning ? "Rescanning..." : "Rescan"}
-        </button>
+        <div className="header-actions">
+          <button
+            onClick={handleRescan}
+            disabled={rescanning}
+            className="rescan-button"
+          >
+            {rescanning ? "Rescanning..." : "Rescan"}
+          </button>
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="delete-button"
+          >
+            {deleting ? "Deleting..." : "Delete"}
+          </button>
+        </div>
       </div>
 
       {viewMode === "table" && <p className="repo-path">{repo.path}</p>}

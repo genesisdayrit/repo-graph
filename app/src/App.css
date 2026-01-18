@@ -154,6 +154,19 @@ tr:hover {
   background-color: #333;
 }
 
+.delete-button {
+  background-color: #c00;
+}
+
+.delete-button:hover:not(:disabled) {
+  background-color: #a00;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
 /* View Toggle */
 .view-toggle {
   display: flex;
