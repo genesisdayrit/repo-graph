@@ -344,3 +344,48 @@ tr:hover {
   font-size: 0.75rem;
   color: #aaa;
 }
+
+/* Repos List */
+.repos-section {
+  margin-top: 2rem;
+}
+
+.repos-section h2 {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.repos-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.repo-item {
+  border-bottom: 1px solid #3a3a4e;
+}
+
+.repo-item:last-child {
+  border-bottom: none;
+}
+
+.repo-link {
+  display: block;
+  padding: 0.75rem 1rem;
+  font-family: monospace;
+  color: #646cff;
+  text-decoration: none;
+  word-break: break-all;
+  transition: background-color 0.2s;
+}
+
+.repo-link:hover {
+  background-color: #2a2a3e;
+}
+
+.loading-text,
+.empty-text {
+  color: #888;
+  text-align: center;
+  margin-top: 2rem;
+}

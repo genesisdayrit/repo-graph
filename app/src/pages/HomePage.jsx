@@ -1,11 +1,31 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
 
 function HomePage() {
   const [path, setPath] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [repos, setRepos] = useState([]);
+  const [loadingRepos, setLoadingRepos] = useState(true);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchRepos();
+  }, []);
+
+  const fetchRepos = async () => {
+    try {
+      const response = await fetch("/api/repos");
+      if (response.ok) {
+        const data = await response.json();
+        setRepos(data);
+      }
+    } catch (err) {
+      console.error("Error fetching repos:", err);
+    } finally {
+      setLoadingRepos(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -53,6 +73,26 @@ function HomePage() {
       </form>
 
       {error && <div className="error">{error}</div>}
+
+      {repos.length > 0 && (
+        <section className="repos-section">
+          <h2>Existing Repos</h2>
+          <ul className="repos-list">
+            {repos.map((repo) => (
+              <li key={repo.id} className="repo-item">
+                <Link to={`/repos/${repo.id}`} className="repo-link">
+                  {repo.path}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {loadingRepos && <p className="loading-text">Loading repos...</p>}
+      {!loadingRepos && repos.length === 0 && (
+        <p className="empty-text">No repos yet. Add one above!</p>
+      )}
     </div>
   );
 }
