@@ -5,14 +5,18 @@ import { repos } from "./repos";
 export const repoEvents = sqliteTable(
   "repo_events",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: text("id").primaryKey(),
     type: text("type", { enum: ["directory", "file"] }).notNull(),
     path: text("path").notNull(),
-    repoId: integer("repo_id")
+    repoId: text("repo_id")
       .notNull()
       .references(() => repos.id, { onDelete: "cascade" }),
     fileType: text("file_type"),
     nodeDepth: integer("node_depth").notNull(),
+    // Filesystem metadata times
+    fsCreatedAt: text("fs_created_at").notNull(),
+    fsModifiedAt: text("fs_modified_at").notNull(),
+    // Database record times
     createdAt: text("created_at")
       .notNull()
       .default(sql`(datetime('now'))`),
