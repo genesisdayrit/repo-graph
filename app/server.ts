@@ -178,6 +178,31 @@ app.get("/api/repos/:id", async (req, res) => {
   }
 });
 
+// DELETE /api/repos/:id - Delete a repo
+app.delete("/api/repos/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const repo = await db
+      .select()
+      .from(repos)
+      .where(eq(repos.id, id))
+      .limit(1);
+
+    if (repo.length === 0) {
+      res.status(404).json({ error: "Repo not found" });
+      return;
+    }
+
+    await db.delete(repos).where(eq(repos.id, id));
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Error deleting repo:", err);
+    res.status(500).json({ error: "Failed to delete repo" });
+  }
+});
+
 // GET /api/repos/:id/events - Fetch repo events
 app.get("/api/repos/:id/events", async (req, res) => {
   const { id } = req.params;
