@@ -10,17 +10,21 @@ export function useGraphData(repo, events, cutoffIndex) {
       return { nodes: [], links: [] };
     }
 
-    // Sort events by timestamp, then by depth for ties (parents before children)
+    // Sort events by timestamp (grouped by second), then by depth (parents first)
     const sortedAllEvents = [...events].sort((a, b) => {
-      // Primary: by creation time
       const timeA = new Date(a.fsCreatedAt).getTime();
       const timeB = new Date(b.fsCreatedAt).getTime();
-      if (timeA !== timeB) return timeA - timeB;
-      // Secondary: by path depth (parents first)
-      const depthA = a.path.split("/").length;
-      const depthB = b.path.split("/").length;
+      // Primary: by timestamp rounded to seconds (groups events in same second)
+      const secondA = Math.floor(timeA / 1000);
+      const secondB = Math.floor(timeB / 1000);
+      if (secondA !== secondB) return secondA - secondB;
+      // Secondary: by node depth (parents before children)
+      const depthA = a.nodeDepth;
+      const depthB = b.nodeDepth;
       if (depthA !== depthB) return depthA - depthB;
-      // Tertiary: by path alphabetically
+      // Tertiary: by exact timestamp
+      if (timeA !== timeB) return timeA - timeB;
+      // Quaternary: by path alphabetically
       return a.path.localeCompare(b.path);
     });
 
@@ -96,14 +100,14 @@ export function useGraphData(repo, events, cutoffIndex) {
       const existingNode = pathToNode.get(event.path);
       if (existingNode && existingNode.isSynthetic) {
         // Upgrade synthetic node with real event data
-        existingNode.id = event.id;
+        // NOTE: We intentionally do NOT change existingNode.id because links
+        // were already created referencing the synthetic id. Changing the id
+        // would orphan those links since ForceGraph matches by id.
         existingNode.type = event.type;
         existingNode.fileType = event.fileType;
         existingNode.fsCreatedAt = event.fsCreatedAt;
         existingNode.fsModifiedAt = event.fsModifiedAt;
         existingNode.isSynthetic = false;
-        // Update pathToNode to point to the upgraded node (already does)
-        // Links are already in place from synthetic creation
         continue;
       }
 
