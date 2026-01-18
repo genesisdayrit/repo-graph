@@ -153,3 +153,194 @@ tr:hover {
 .rescan-button:hover:not(:disabled) {
   background-color: #333;
 }
+
+/* View Toggle */
+.view-toggle {
+  display: flex;
+  gap: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid #4a4a5e;
+}
+
+.view-toggle button {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  background-color: transparent;
+  border: none;
+  border-radius: 0;
+  color: #888;
+}
+
+.view-toggle button:hover:not(:disabled) {
+  background-color: #3a3a4e;
+}
+
+.view-toggle button.active {
+  background-color: #646cff;
+  color: white;
+}
+
+/* Graph View Layout */
+.repo-page {
+  padding: 0 2rem 2rem;
+}
+
+.repo-page.graph-view {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: 0;
+  overflow: hidden;
+}
+
+.repo-page.graph-view .repo-header {
+  padding: 0.75rem 1.5rem;
+  background: #2a2a3e;
+  border-bottom: 1px solid #3a3a4e;
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.repo-page.graph-view .repo-header h1 {
+  font-size: 1.25rem;
+}
+
+.repo-page.graph-view .repo-header .back-link {
+  margin-bottom: 0;
+}
+
+/* Graph Container */
+.graph-container {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Graph Stats */
+.graph-stats {
+  position: absolute;
+  top: 1rem;
+  right: 1.5rem;
+  font-size: 0.875rem;
+  color: #aaa;
+  background: rgba(30, 30, 50, 0.8);
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  z-index: 10;
+}
+
+/* Timeline Controls */
+.graph-controls {
+  padding: 1rem 1.5rem;
+  background: #2a2a3e;
+  border-top: 1px solid #3a3a4e;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.timeline-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.play-button {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  min-width: 100px;
+}
+
+.speed-select {
+  padding: 0.5rem;
+  background: #3a3a4e;
+  color: white;
+  border: 1px solid #4a4a5e;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.timeline-slider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.timeline-slider .slider {
+  flex: 1;
+  height: 8px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #3a3a4e;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.timeline-slider .slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #646cff;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.timeline-slider .slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: #646cff;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+.time-label {
+  font-size: 0.75rem;
+  color: #888;
+  min-width: 100px;
+}
+
+.time-label:last-child {
+  text-align: right;
+}
+
+.current-time {
+  text-align: center;
+  font-size: 0.875rem;
+  color: #aaa;
+}
+
+/* Node Tooltip */
+.node-tooltip {
+  background: rgba(30, 30, 50, 0.95);
+  border: 1px solid #4a4a6e;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  max-width: 400px;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.tooltip-name {
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.tooltip-path {
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: #888;
+  word-break: break-all;
+  margin-bottom: 0.5rem;
+}
+
+.tooltip-type,
+.tooltip-created {
+  font-size: 0.75rem;
+  color: #aaa;
+}

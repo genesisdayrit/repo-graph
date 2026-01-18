@@ -1,5 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
+import RepoGraph3D from "../components/RepoGraph/RepoGraph3D";
+import GraphControls from "../components/RepoGraph/GraphControls";
+import NodeTooltip from "../components/RepoGraph/NodeTooltip";
+import { useGraphData, useTimestamps } from "../components/RepoGraph/useGraphData";
+import { useTimelineAnimation } from "../components/RepoGraph/useTimelineAnimation";
 
 function RepoPage() {
   const { id } = useParams();
@@ -7,7 +12,11 @@ function RepoPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [events, setEvents] = useState(null);
+  const [timelineEvents, setTimelineEvents] = useState([]);
   const [rescanning, setRescanning] = useState(false);
+  const [viewMode, setViewMode] = useState("table");
+  const [hoveredNode, setHoveredNode] = useState(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   // Fetch repo data
   useEffect(() => {
@@ -31,7 +40,7 @@ function RepoPage() {
     fetchRepo();
   }, [id]);
 
-  // Fetch events when repo is loaded
+  // Fetch events when repo is loaded (for table view)
   useEffect(() => {
     async function fetchEvents() {
       if (!repo) return;
@@ -53,6 +62,58 @@ function RepoPage() {
     fetchEvents();
   }, [repo, id]);
 
+  // Fetch timeline events when switching to graph view
+  useEffect(() => {
+    async function fetchTimeline() {
+      if (!repo || viewMode !== "graph") return;
+
+      try {
+        const response = await fetch(`/api/repos/${id}/events/timeline`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to fetch timeline");
+        }
+
+        setTimelineEvents(data.events);
+      } catch (err) {
+        setError(err.message);
+      }
+    }
+
+    fetchTimeline();
+  }, [repo, id, viewMode]);
+
+  // Extract timestamps for timeline
+  const timestamps = useTimestamps(timelineEvents);
+
+  // Timeline animation controls
+  const {
+    currentTime,
+    isPlaying,
+    playbackSpeed,
+    setPlaybackSpeed,
+    onTimeChange,
+    onPlayPause,
+  } = useTimelineAnimation(timestamps);
+
+  // Transform data to graph format
+  const graphData = useGraphData(repo, timelineEvents, currentTime);
+
+  // Track mouse position for tooltip
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
+  // Handle node hover
+  const handleNodeHover = useCallback((node) => {
+    setHoveredNode(node);
+  }, []);
+
   const handleRescan = async () => {
     setRescanning(true);
     setError(null);
@@ -68,6 +129,8 @@ function RepoPage() {
       }
 
       setEvents(data);
+      // Clear timeline events to force refetch
+      setTimelineEvents([]);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -91,17 +154,34 @@ function RepoPage() {
     return (
       <div className="container">
         <div className="error">{error}</div>
-        <Link to="/" className="back-link">&larr; Back to Home</Link>
+        <Link to="/" className="back-link">
+          &larr; Back to Home
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="container">
-      <Link to="/" className="back-link">&larr; Back</Link>
-
+    <div className={viewMode === "graph" ? "repo-page graph-view" : "repo-page"}>
       <div className="repo-header">
+        <Link to="/" className="back-link">
+          &larr; Back
+        </Link>
         <h1>{repo.name}</h1>
+        <div className="view-toggle">
+          <button
+            className={viewMode === "table" ? "active" : ""}
+            onClick={() => setViewMode("table")}
+          >
+            Table
+          </button>
+          <button
+            className={viewMode === "graph" ? "active" : ""}
+            onClick={() => setViewMode("graph")}
+          >
+            Graph
+          </button>
+        </div>
         <button
           onClick={handleRescan}
           disabled={rescanning}
@@ -110,12 +190,13 @@ function RepoPage() {
           {rescanning ? "Rescanning..." : "Rescan"}
         </button>
       </div>
-      <p className="repo-path">{repo.path}</p>
+
+      {viewMode === "table" && <p className="repo-path">{repo.path}</p>}
 
       {error && <div className="error">{error}</div>}
 
-      {events && (
-        <div className="results">
+      {viewMode === "table" && events && (
+        <div className="container results">
           <section>
             <h2>Directories ({events.directories.length})</h2>
             <div className="table-container">
@@ -164,6 +245,32 @@ function RepoPage() {
             </div>
           </section>
         </div>
+      )}
+
+      {viewMode === "graph" && (
+        <>
+          <div className="graph-container">
+            <RepoGraph3D graphData={graphData} onNodeHover={handleNodeHover} />
+          </div>
+
+          {timestamps.length > 0 && (
+            <GraphControls
+              timestamps={timestamps}
+              currentTime={currentTime}
+              onTimeChange={onTimeChange}
+              isPlaying={isPlaying}
+              onPlayPause={onPlayPause}
+              playbackSpeed={playbackSpeed}
+              onSpeedChange={setPlaybackSpeed}
+            />
+          )}
+
+          <NodeTooltip node={hoveredNode} position={mousePosition} />
+
+          <div className="graph-stats">
+            {graphData.nodes.length} / {timelineEvents.length + 1} nodes
+          </div>
+        </>
       )}
     </div>
   );

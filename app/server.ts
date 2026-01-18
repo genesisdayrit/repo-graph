@@ -1,6 +1,6 @@
 import express from "express";
 import ViteExpress from "vite-express";
-import { eq } from "drizzle-orm";
+import { eq, asc } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { listCreationTimes } from "./src/server/listCreationTimes";
 import { db } from "./src/db";
@@ -199,6 +199,35 @@ app.get("/api/repos/:id/events", async (req, res) => {
   } catch (err) {
     console.error("Error fetching repo events:", err);
     res.status(500).json({ error: "Failed to fetch repo events" });
+  }
+});
+
+// GET /api/repos/:id/events/timeline - Fetch repo events ordered by fs_created_at
+app.get("/api/repos/:id/events/timeline", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const repo = await db
+      .select()
+      .from(repos)
+      .where(eq(repos.id, id))
+      .limit(1);
+
+    if (repo.length === 0) {
+      res.status(404).json({ error: "Repo not found" });
+      return;
+    }
+
+    const events = await db
+      .select()
+      .from(repoEvents)
+      .where(eq(repoEvents.repoId, id))
+      .orderBy(asc(repoEvents.fsCreatedAt));
+
+    res.json({ repo: repo[0], events });
+  } catch (err) {
+    console.error("Error fetching timeline:", err);
+    res.status(500).json({ error: "Failed to fetch timeline" });
   }
 });
 
