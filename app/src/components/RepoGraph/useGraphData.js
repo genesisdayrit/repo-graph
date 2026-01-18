@@ -1,11 +1,7 @@
 import { useMemo } from "react";
 
-// Creator node ID constant (must match RepoGraph2D.jsx)
-export const CREATOR_NODE_ID = "__creator__";
-
 /**
  * Transform flat repo_events into graph nodes and links
- * Includes a central "creator" node that all items emanate from
  * @param cutoffIndex - number of events to include (event-based, not time-based)
  */
 export function useGraphData(repo, events, cutoffIndex) {
@@ -39,18 +35,6 @@ export function useGraphData(repo, events, cutoffIndex) {
     const nodes = [];
     const links = [];
 
-    // Add creator node - central point that all items emanate from
-    const creatorNode = {
-      id: CREATOR_NODE_ID,
-      displayName: "Creator",
-      type: "creator",
-      isCreator: true,
-      // Pin at center
-      fx: 0,
-      fy: 0,
-    };
-    nodes.push(creatorNode);
-
     // Add root node (the repo itself)
     const rootNode = {
       id: repo.id,
@@ -63,12 +47,6 @@ export function useGraphData(repo, events, cutoffIndex) {
     };
     nodes.push(rootNode);
     pathToNode.set(repo.path, rootNode);
-
-    // Link creator to root
-    links.push({
-      source: CREATOR_NODE_ID,
-      target: repo.id,
-    });
 
     // Helper to ensure all ancestor directories exist
     const ensureParentExists = (childPath) => {
