@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
  * @param eventCount - total number of events
  */
 export function useTimelineAnimation(eventCount, options = {}) {
-  const { stepInterval = 100 } = options; // Fast by default for smooth animation
+  const { stepInterval = 300 } = options; // 300ms per event at 1x speed
 
   const [currentIndex, setCurrentIndex] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
