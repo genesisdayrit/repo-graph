@@ -79,10 +79,11 @@ A special root node is created from the repo metadata, serving as the graph's or
 
 A special "creator" node is added to the graph that visually represents the creation of new files and directories. The creator node:
 
-- Has a pulsing cyan glow effect that animates continuously
+- Displays as a large gray circle (12px radius)
+- Has a subtle pulsing animation
 - Is free to move around the graph (participates in force simulation)
 - Has higher repulsion strength to create space around it
-- Fires glowing beams to newly created nodes during timeline playback
+- Fires glowing gold beams to newly created nodes during timeline playback
 
 The creator node is linked to the root node but the link is not visually rendered - instead, beam animations handle the visual connection.
 
@@ -100,9 +101,9 @@ During timeline playback, when new nodes appear in the graph, a glowing beam ani
 ### Visual Effect
 
 The beam consists of three layered lines for a glowing effect:
-- **Outer glow**: 10px wide, low opacity cyan
-- **Middle glow**: 5px wide, medium opacity cyan
-- **Core beam**: 2px wide, bright white-cyan
+- **Outer glow**: 10px wide, low opacity gold
+- **Middle glow**: 5px wide, medium opacity gold
+- **Core beam**: 2px wide, bright yellow-white
 
 ### Timing
 
@@ -114,12 +115,12 @@ The beam consists of three layered lines for a glowing effect:
 
 ### Node Types and Sizes
 
-| Node Type | Size | Color |
-|-----------|------|-------|
-| Creator node | 12px (pulsing) | Cyan (#64c8ff) with glow |
-| Root directory | 8px circle | Blue (#4a90d9) |
-| Subdirectory | 5px circle | Green (#7cb342) |
-| File | 2px dot | Varies by type |
+| Node Type | Size | Color | Glow |
+|-----------|------|-------|------|
+| Creator node | 12px circle (pulsing) | Gray (#888888) | None |
+| Root directory | 8px circle | Blue (#4a90d9) | Soft blue glow |
+| Subdirectory | 5px circle | Green (#7cb342) | Soft green glow |
+| File | 2px dot | Varies by type | Soft color-matched glow |
 
 ### File Type Colors
 
@@ -215,7 +216,7 @@ Hovering over a node displays a tooltip showing:
 
 ### Background
 
-Dark theme background (#1a1a2e) optimizes contrast for the colorful nodes.
+Pure black background (#000000) provides maximum contrast for the colorful nodes and their soft glow effects.
 
 ## Performance Considerations
 

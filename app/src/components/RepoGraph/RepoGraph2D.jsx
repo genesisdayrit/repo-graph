@@ -35,6 +35,13 @@ function RepoGraph2D({ graphData, onNodeHover, newNodeIds = [], isPlaying = fals
   // Keep ref updated with latest graphData
   graphDataRef.current = graphData;
 
+  // Zoom to fit when force simulation stops
+  const handleEngineStop = useCallback(() => {
+    if (fgRef.current) {
+      fgRef.current.zoomToFit(400, 50); // 400ms duration, 50px padding
+    }
+  }, []);
+
   // Queue new nodes for beam animation (only when playing)
   useEffect(() => {
     if (newNodeIds.length === 0 || !isPlaying) return;
@@ -80,28 +87,13 @@ function RepoGraph2D({ graphData, onNodeHover, newNodeIds = [], isPlaying = fals
     // Guard against undefined coordinates
     if (node.x === undefined || node.y === undefined) return;
 
-    // Creator node - pulsing glow effect
+    // Creator node - large gray circle with subtle pulse
     if (node.id === CREATOR_NODE_ID) {
       const time = Date.now() / 1000;
-      const pulse = 0.8 + 0.2 * Math.sin(time * 3);
+      const pulse = 0.9 + 0.1 * Math.sin(time * 3);
       const radius = 12 * pulse;
 
-      // Outer glow gradient
-      const gradient = ctx.createRadialGradient(
-        node.x, node.y, 0,
-        node.x, node.y, radius * 2
-      );
-      gradient.addColorStop(0, "rgba(100, 200, 255, 0.8)");
-      gradient.addColorStop(0.5, "rgba(100, 200, 255, 0.3)");
-      gradient.addColorStop(1, "rgba(100, 200, 255, 0)");
-
-      ctx.fillStyle = gradient;
-      ctx.beginPath();
-      ctx.arc(node.x, node.y, radius * 2, 0, 2 * Math.PI);
-      ctx.fill();
-
-      // Core
-      ctx.fillStyle = "#64c8ff";
+      ctx.fillStyle = "#888888";
       ctx.beginPath();
       ctx.arc(node.x, node.y, radius, 0, 2 * Math.PI);
       ctx.fill();
@@ -112,6 +104,18 @@ function RepoGraph2D({ graphData, onNodeHover, newNodeIds = [], isPlaying = fals
     if (node.type === "directory") {
       const radius = node.isRoot ? 8 : 5;
       const color = node.isRoot ? "#4a90d9" : "#7cb342";
+
+      // Soft glow effect
+      const glowGradient = ctx.createRadialGradient(
+        node.x, node.y, 0,
+        node.x, node.y, radius * 3
+      );
+      glowGradient.addColorStop(0, color + "66"); // 40% opacity at center
+      glowGradient.addColorStop(1, color + "00"); // transparent at edge
+      ctx.fillStyle = glowGradient;
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, radius * 3, 0, 2 * Math.PI);
+      ctx.fill();
 
       // Draw circle
       ctx.fillStyle = color;
@@ -128,9 +132,24 @@ function RepoGraph2D({ graphData, onNodeHover, newNodeIds = [], isPlaying = fals
       ctx.fillStyle = "#ffffff";
       ctx.fillText(label, node.x, node.y + radius + 2);
     } else {
-      // File nodes: small dots
+      // File nodes: small dots with soft glow
       const radius = 2;
-      ctx.fillStyle = getFileColor(node.fileType);
+      const fileColor = getFileColor(node.fileType);
+
+      // Soft glow effect
+      const glowGradient = ctx.createRadialGradient(
+        node.x, node.y, 0,
+        node.x, node.y, radius * 4
+      );
+      glowGradient.addColorStop(0, fileColor + "55"); // 33% opacity at center
+      glowGradient.addColorStop(1, fileColor + "00"); // transparent at edge
+      ctx.fillStyle = glowGradient;
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, radius * 4, 0, 2 * Math.PI);
+      ctx.fill();
+
+      // Draw node
+      ctx.fillStyle = fileColor;
       ctx.beginPath();
       ctx.arc(node.x, node.y, radius, 0, 2 * Math.PI);
       ctx.fill();
@@ -183,9 +202,9 @@ function RepoGraph2D({ graphData, onNodeHover, newNodeIds = [], isPlaying = fals
 
       const intensity = activeBeam.intensity;
 
-      // Three-layer beam effect
+      // Three-layer beam effect (gold/yellow)
       // Outer glow
-      ctx.strokeStyle = `rgba(100, 200, 255, ${intensity * 0.3})`;
+      ctx.strokeStyle = `rgba(255, 215, 0, ${intensity * 0.3})`;
       ctx.lineWidth = 10;
       ctx.beginPath();
       ctx.moveTo(creatorNode.x, creatorNode.y);
@@ -193,7 +212,7 @@ function RepoGraph2D({ graphData, onNodeHover, newNodeIds = [], isPlaying = fals
       ctx.stroke();
 
       // Middle glow
-      ctx.strokeStyle = `rgba(100, 200, 255, ${intensity * 0.6})`;
+      ctx.strokeStyle = `rgba(255, 215, 0, ${intensity * 0.6})`;
       ctx.lineWidth = 5;
       ctx.beginPath();
       ctx.moveTo(creatorNode.x, creatorNode.y);
@@ -201,7 +220,7 @@ function RepoGraph2D({ graphData, onNodeHover, newNodeIds = [], isPlaying = fals
       ctx.stroke();
 
       // Core beam
-      ctx.strokeStyle = `rgba(200, 240, 255, ${intensity})`;
+      ctx.strokeStyle = `rgba(255, 240, 200, ${intensity})`;
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(creatorNode.x, creatorNode.y);
@@ -221,7 +240,8 @@ function RepoGraph2D({ graphData, onNodeHover, newNodeIds = [], isPlaying = fals
       linkCanvasObjectMode={() => "replace"}
       onNodeHover={handleNodeHover}
       onRenderFramePost={handleRenderFramePost}
-      backgroundColor="#1a1a2e"
+      onEngineStop={handleEngineStop}
+      backgroundColor="#000000"
       // Physics configuration for organic layout
       d3AlphaDecay={0.02}
       d3VelocityDecay={0.3}
