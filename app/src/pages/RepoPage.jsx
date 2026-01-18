@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
-import RepoGraph3D from "../components/RepoGraph/RepoGraph3D";
+import RepoGraph2D from "../components/RepoGraph/RepoGraph2D";
 import GraphControls from "../components/RepoGraph/GraphControls";
 import NodeTooltip from "../components/RepoGraph/NodeTooltip";
-import { useGraphData, useTimestamps } from "../components/RepoGraph/useGraphData";
+import { useGraphData, CREATOR_NODE_ID } from "../components/RepoGraph/useGraphData";
 import { useTimelineAnimation } from "../components/RepoGraph/useTimelineAnimation";
 
 function RepoPage() {
@@ -17,6 +17,8 @@ function RepoPage() {
   const [viewMode, setViewMode] = useState("table");
   const [hoveredNode, setHoveredNode] = useState(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [newNodeIds, setNewNodeIds] = useState([]);
+  const prevNodeIdsRef = useRef(new Set());
 
   // Fetch repo data
   useEffect(() => {
@@ -84,21 +86,45 @@ function RepoPage() {
     fetchTimeline();
   }, [repo, id, viewMode]);
 
-  // Extract timestamps for timeline
-  const timestamps = useTimestamps(timelineEvents);
-
-  // Timeline animation controls
+  // Timeline animation controls (event-based)
+  const eventCount = timelineEvents.length;
   const {
-    currentTime,
+    currentIndex,
     isPlaying,
     playbackSpeed,
     setPlaybackSpeed,
-    onTimeChange,
+    onIndexChange,
     onPlayPause,
-  } = useTimelineAnimation(timestamps);
+  } = useTimelineAnimation(eventCount);
 
-  // Transform data to graph format
-  const graphData = useGraphData(repo, timelineEvents, currentTime);
+  // Transform data to graph format (using event index, not timestamp)
+  const graphData = useGraphData(repo, timelineEvents, currentIndex);
+
+  // Track newly appearing nodes for glow effect
+  useEffect(() => {
+    if (!graphData.nodes.length) return;
+
+    const currentNodeIds = new Set(
+      graphData.nodes
+        .filter((n) => n.id !== CREATOR_NODE_ID)
+        .map((n) => n.id)
+    );
+    const prevNodeIds = prevNodeIdsRef.current;
+
+    // Find nodes that just appeared
+    const newIds = [];
+    currentNodeIds.forEach((id) => {
+      if (!prevNodeIds.has(id)) {
+        newIds.push(id);
+      }
+    });
+
+    if (newIds.length > 0) {
+      setNewNodeIds(newIds);
+    }
+
+    prevNodeIdsRef.current = currentNodeIds;
+  }, [graphData.nodes]);
 
   // Track mouse position for tooltip
   useEffect(() => {
@@ -250,14 +276,19 @@ function RepoPage() {
       {viewMode === "graph" && (
         <>
           <div className="graph-container">
-            <RepoGraph3D graphData={graphData} onNodeHover={handleNodeHover} />
+            <RepoGraph2D
+              graphData={graphData}
+              onNodeHover={handleNodeHover}
+              newNodeIds={newNodeIds}
+              isPlaying={isPlaying}
+            />
           </div>
 
-          {timestamps.length > 0 && (
+          {eventCount > 0 && (
             <GraphControls
-              timestamps={timestamps}
-              currentTime={currentTime}
-              onTimeChange={onTimeChange}
+              eventCount={eventCount}
+              currentIndex={currentIndex}
+              onIndexChange={onIndexChange}
               isPlaying={isPlaying}
               onPlayPause={onPlayPause}
               playbackSpeed={playbackSpeed}
@@ -268,7 +299,7 @@ function RepoPage() {
           <NodeTooltip node={hoveredNode} position={mousePosition} />
 
           <div className="graph-stats">
-            {graphData.nodes.length} / {timelineEvents.length + 1} nodes
+            {currentIndex ?? eventCount} / {eventCount} events
           </div>
         </>
       )}

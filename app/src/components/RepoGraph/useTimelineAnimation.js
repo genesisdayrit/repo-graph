@@ -1,28 +1,27 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
 /**
- * Hook for managing timeline animation
+ * Hook for managing timeline animation (event-based, not timestamp-based)
+ * @param eventCount - total number of events
  */
-export function useTimelineAnimation(timestamps, options = {}) {
-  const { stepInterval = 500 } = options;
+export function useTimelineAnimation(eventCount, options = {}) {
+  const { stepInterval = 100 } = options; // Fast by default for smooth animation
 
-  const [currentTime, setCurrentTime] = useState(null);
+  const [currentIndex, setCurrentIndex] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const animationRef = useRef(null);
-  const currentIndexRef = useRef(0);
 
-  // Initialize to latest time (show full graph initially)
+  // Initialize to show full graph (all events)
   useEffect(() => {
-    if (timestamps.length > 0 && currentTime === null) {
-      setCurrentTime(timestamps[timestamps.length - 1]);
-      currentIndexRef.current = timestamps.length - 1;
+    if (eventCount > 0 && currentIndex === null) {
+      setCurrentIndex(eventCount);
     }
-  }, [timestamps, currentTime]);
+  }, [eventCount, currentIndex]);
 
-  // Animation loop
+  // Animation loop - advance one event at a time
   useEffect(() => {
-    if (!isPlaying || timestamps.length === 0) {
+    if (!isPlaying || eventCount === 0) {
       if (animationRef.current) {
         clearInterval(animationRef.current);
         animationRef.current = null;
@@ -33,14 +32,14 @@ export function useTimelineAnimation(timestamps, options = {}) {
     const interval = stepInterval / playbackSpeed;
 
     animationRef.current = setInterval(() => {
-      currentIndexRef.current += 1;
-
-      if (currentIndexRef.current >= timestamps.length) {
-        setIsPlaying(false);
-        currentIndexRef.current = timestamps.length - 1;
-      }
-
-      setCurrentTime(timestamps[currentIndexRef.current]);
+      setCurrentIndex((prev) => {
+        const next = (prev ?? 0) + 1;
+        if (next >= eventCount) {
+          setIsPlaying(false);
+          return eventCount;
+        }
+        return next;
+      });
     }, interval);
 
     return () => {
@@ -48,52 +47,43 @@ export function useTimelineAnimation(timestamps, options = {}) {
         clearInterval(animationRef.current);
       }
     };
-  }, [isPlaying, timestamps, playbackSpeed, stepInterval]);
+  }, [isPlaying, eventCount, playbackSpeed, stepInterval]);
 
-  // Handle manual time change
-  const handleTimeChange = useCallback(
-    (newTime) => {
-      const index = timestamps.findIndex((t) => t >= newTime);
-      currentIndexRef.current = index >= 0 ? index : timestamps.length - 1;
-      setCurrentTime(timestamps[currentIndexRef.current]);
+  // Handle manual index change (from slider)
+  const handleIndexChange = useCallback(
+    (newIndex) => {
+      setCurrentIndex(Math.min(Math.max(0, newIndex), eventCount));
     },
-    [timestamps]
+    [eventCount]
   );
 
   // Play/pause toggle
   const togglePlayPause = useCallback(() => {
-    if (!isPlaying && currentIndexRef.current >= timestamps.length - 1) {
+    if (!isPlaying && currentIndex >= eventCount) {
       // If at end, restart from beginning
-      currentIndexRef.current = 0;
-      setCurrentTime(timestamps[0]);
+      setCurrentIndex(0);
     }
     setIsPlaying((prev) => !prev);
-  }, [isPlaying, timestamps]);
+  }, [isPlaying, currentIndex, eventCount]);
 
   // Reset to beginning
   const reset = useCallback(() => {
     setIsPlaying(false);
-    currentIndexRef.current = 0;
-    if (timestamps.length > 0) {
-      setCurrentTime(timestamps[0]);
-    }
-  }, [timestamps]);
+    setCurrentIndex(0);
+  }, []);
 
   // Jump to end (show all)
   const showAll = useCallback(() => {
     setIsPlaying(false);
-    currentIndexRef.current = timestamps.length - 1;
-    if (timestamps.length > 0) {
-      setCurrentTime(timestamps[timestamps.length - 1]);
-    }
-  }, [timestamps]);
+    setCurrentIndex(eventCount);
+  }, [eventCount]);
 
   return {
-    currentTime,
+    currentIndex,
     isPlaying,
     playbackSpeed,
     setPlaybackSpeed,
-    onTimeChange: handleTimeChange,
+    onIndexChange: handleIndexChange,
     onPlayPause: togglePlayPause,
     reset,
     showAll,
