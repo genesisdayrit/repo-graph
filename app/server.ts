@@ -80,7 +80,7 @@ app.post("/api/repos", async (req, res) => {
     return;
   }
 
-  const trimmedPath = path.trim();
+  const trimmedPath = path.trim().replace(/\/+$/, "");
 
   try {
     // Check if repo with this path already exists
