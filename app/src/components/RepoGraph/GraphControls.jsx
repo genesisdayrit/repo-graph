@@ -1,43 +1,15 @@
 function GraphControls({
-  timestamps,
-  currentTime,
-  onTimeChange,
+  eventCount,
+  currentIndex,
+  onIndexChange,
   isPlaying,
   onPlayPause,
   playbackSpeed,
   onSpeedChange,
 }) {
-  const formatDate = (isoString) => {
-    return new Date(isoString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
-
-  if (!timestamps || timestamps.length === 0) {
+  if (!eventCount || eventCount === 0) {
     return null;
   }
-
-  const minTime = timestamps[0];
-  const maxTime = timestamps[timestamps.length - 1];
-
-  // Convert ISO string to slider value (0-100)
-  const timeToSlider = (time) => {
-    if (!time) return 100;
-    const min = new Date(minTime).getTime();
-    const max = new Date(maxTime).getTime();
-    const current = new Date(time).getTime();
-    if (max === min) return 100;
-    return ((current - min) / (max - min)) * 100;
-  };
-
-  const sliderToTime = (value) => {
-    const min = new Date(minTime).getTime();
-    const max = new Date(maxTime).getTime();
-    const time = min + (value / 100) * (max - min);
-    return new Date(time).toISOString();
-  };
 
   return (
     <div className="graph-controls">
@@ -55,24 +27,27 @@ function GraphControls({
           <option value={1}>1x</option>
           <option value={2}>2x</option>
           <option value={4}>4x</option>
+          <option value={8}>8x</option>
         </select>
       </div>
 
       <div className="timeline-slider">
-        <span className="time-label">{formatDate(minTime)}</span>
+        <span className="time-label">0</span>
         <input
           type="range"
           min={0}
-          max={100}
-          step={0.1}
-          value={timeToSlider(currentTime)}
-          onChange={(e) => onTimeChange(sliderToTime(Number(e.target.value)))}
+          max={eventCount}
+          step={1}
+          value={currentIndex ?? eventCount}
+          onChange={(e) => onIndexChange(Number(e.target.value))}
           className="slider"
         />
-        <span className="time-label">{formatDate(maxTime)}</span>
+        <span className="time-label">{eventCount}</span>
       </div>
 
-      <div className="current-time">Current: {currentTime ? formatDate(currentTime) : "-"}</div>
+      <div className="current-time">
+        Event: {currentIndex ?? eventCount} / {eventCount}
+      </div>
     </div>
   );
 }
