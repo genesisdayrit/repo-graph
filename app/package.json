@@ -4,19 +4,21 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "bun server.js",
+    "dev": "bun server.ts",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
     "express": "^5.2.1",
+    "ignore": "^7.0.5",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "vite-express": "^0.22.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@types/express": "^5.0.6",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
