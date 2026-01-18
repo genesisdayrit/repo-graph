@@ -35,6 +35,13 @@ function RepoGraph2D({ graphData, onNodeHover, newNodeIds = [], isPlaying = fals
   // Keep ref updated with latest graphData
   graphDataRef.current = graphData;
 
+  // Zoom to fit when force simulation stops
+  const handleEngineStop = useCallback(() => {
+    if (fgRef.current) {
+      fgRef.current.zoomToFit(400, 50); // 400ms duration, 50px padding
+    }
+  }, []);
+
   // Queue new nodes for beam animation (only when playing)
   useEffect(() => {
     if (newNodeIds.length === 0 || !isPlaying) return;
@@ -233,6 +240,7 @@ function RepoGraph2D({ graphData, onNodeHover, newNodeIds = [], isPlaying = fals
       linkCanvasObjectMode={() => "replace"}
       onNodeHover={handleNodeHover}
       onRenderFramePost={handleRenderFramePost}
+      onEngineStop={handleEngineStop}
       backgroundColor="#000000"
       // Physics configuration for organic layout
       d3AlphaDecay={0.02}
